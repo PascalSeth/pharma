@@ -1,0 +1,165 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+      directUrl = env("DIRECT_URL")
+
+
+}
+
+model Supplier {
+  id        String         @id @default(uuid())
+  name      String
+  email     String         @unique
+  phone     String?
+  address   String?
+  drugs     DrugInventory[]
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+}
+
+enum DrugCategory {
+  Tablets
+  Capsules
+  Syrups
+  Injections
+  Topicals
+  Powders
+  Contraceptives
+  Ointments
+  Drops
+  Creams
+  Suppositories
+}
+
+enum PackagingType {
+  Bottle
+  Box
+  Can
+  Jar
+  Strip
+  Vial
+  Ampoule
+  Sachet
+}
+
+model DrugInventory {
+  id                    String             @id @default(uuid())
+  costPrice             Float
+  quantity              Int                @default(0)
+  supplierId            String
+  supplier              Supplier           @relation(fields: [supplierId], references: [id])
+  drugListId            String             @unique
+  category              DrugCategory
+  packagingType         PackagingType
+  expirationDate        DateTime
+  drugList              DrugList           @relation(fields: [drugListId], references: [id])
+  transactions          Transaction[]
+  canBeSoldInOtherForms Boolean           @default(false)  // Indicates if the drug can be sold in other forms
+  sellingPrice          Float?             // Default selling price
+  alternateForms        DrugForm[]       // Optional array of alternate forms with different packaging and pricing
+  createdAt             DateTime           @default(now())
+  updatedAt             DateTime           @updatedAt
+}
+
+model Admin {
+  id          String           @id @default(uuid())
+  firstName   String
+  lastName    String
+  email       String           @unique
+  password    String
+  gender      Gender
+  role        Role             @default(TELLER)
+  address     String
+  transactions Transaction[]
+  payrollDetails PayrollDetails? // Relation to PayrollDetails
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+}
+
+model PayrollDetails {
+  id                String   @id @default(uuid())
+  adminId           String   @unique
+  admin             Admin    @relation(fields: [adminId], references: [id])
+  bank              String
+  branch            String
+  branchCode        String
+  accountNo         String
+  taxContributor    Boolean  @default(false)
+  pfContributor     Boolean  @default(false)
+  tucContributor    Boolean  @default(false)
+  ssfContributor    Boolean  @default(false)
+  ssfSlab           String
+  ssfNo             String
+  ssfStaff          Float
+  ssfEmployer       Float
+  separationDate    DateTime?
+  separationReason  String?
+  status            String
+  basicSalary       Float
+  taxable           Float
+  incomeTax         Float
+  loans             Float
+  netSalary         Float
+  overtime          Float
+  overtimeTax       Float
+  normalTax         Float
+  otherDeductions   Float
+  otherIncome       Float
+  theMonth          Int      
+  theYear           Int      
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+enum Gender{
+  MALE
+  FEMALE
+  OTHER
+}
+model DrugForm {
+  id                String         @id @default(uuid())
+  drugInventoryId   String
+  drugInventory     DrugInventory  @relation(fields: [drugInventoryId], references: [id])
+  packagingType     PackagingType 
+  sellingPrice      Float          // Price for this specific form
+  quantityInBaseUnits   Int             
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+}
+model Transaction {
+  id               String        @id @default(uuid())
+  drugId           String
+  drug             DrugInventory @relation(fields: [drugId], references: [id])
+  tellerId         String
+  teller           Admin         @relation(fields: [tellerId], references: [id])
+  quantity         Int
+  dosage           String
+  totalAmount      Float
+  createdAt        DateTime      @default(now())
+  transactionTime  DateTime      @default(now())
+}
+
+enum Role {
+  OWNER
+  TELLER
+}
+
+model DrugList {
+  id                String   @id @default(uuid())
+  name              String
+  imageUrl          String?
+  substitutes       String[]
+  sideEffects       String[]
+  uses              String[]
+  chemicalClass     String?
+  habitForming      String?
+  therapeuticClass  String?
+  actionClass       String?
+  drugs             DrugInventory[]
+}
+
+
