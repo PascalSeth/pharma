@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Table,
@@ -31,29 +31,31 @@ const DrugEntries = () => {
 
   const halfTotalDrugs = Math.floor(totalDrugs / 2);
 
-  const fetchDrugs = async () => {
-    setLoading(true);
-    try {
-      if (!letter ) return; // Ensure only a single letter is used
-
-      const response = await fetch(`/entries/GET?letter=${letter}`);
-      const data = await response.json();
-      const filteredDrugs = data.drugs.filter((drug: Drug) =>
-        drug.name.startsWith(letter)
-      );
-  
-      setDrugs(filteredDrugs);      setTotalDrugs(data.totalDrugs);
-      setDrugsWithImages(data.drugsWithImages);
-    } catch (error) {
-      console.error("Error fetching drugs:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   useEffect(() => {
+    const fetchDrugs = async () => {
+      setLoading(true);
+      try {
+        if (!letter) return;
+  
+        const response = await fetch(`/entries/GET?letter=${letter}`);
+        const data = await response.json();
+        const filteredDrugs = data.drugs.filter((drug: Drug) =>
+          drug.name.startsWith(letter)
+        );
+  
+        setDrugs(filteredDrugs);
+        setTotalDrugs(data.totalDrugs);
+        setDrugsWithImages(data.drugsWithImages);
+      } catch (error) {
+        console.error("Error fetching drugs:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
     fetchDrugs();
   }, [letter]);
+  
 
   const allImagesSelected = () => {
     return drugs.every((drug) => drug.imageUrl || selectedImages[drug.id]);
@@ -118,7 +120,6 @@ const DrugEntries = () => {
 
       // Reload the page after submission
       window.location.reload();
-      await fetchDrugs(); // Refresh the drugs data
 
     } catch (error) {
       console.error("Submission error:", error);
