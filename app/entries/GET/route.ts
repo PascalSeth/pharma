@@ -34,13 +34,7 @@ export async function GET(request: Request) {
       select: {
         id: true,
         name: true,
-        substitutes: true,
-        sideEffects: true,
-        uses: true,
-        chemicalClass: true,
-        habitForming: true,
-        therapeuticClass: true,
-        actionClass: true,
+
       },
       orderBy: {
         name: "asc",

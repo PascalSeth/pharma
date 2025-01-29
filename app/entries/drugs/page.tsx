@@ -16,9 +16,7 @@ import {
 type Drug = {
   id: string;
   name: string;
-  substitutes: string[];
-  sideEffects: string[];
-  uses: string[];
+
   imageUrl?: string | null;
 };
 
@@ -141,7 +139,6 @@ const fetchDrugs = async () => {
                 <TableRow key={drug.id}>
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>{drug.name}</TableCell>
-                  <TableCell>{drug.uses.join(", ")}</TableCell>
                   <TableCell>
                     {drug.imageUrl ? (
                       <img src={drug.imageUrl} alt={drug.name} className="w-16 h-16 rounded-lg" />
