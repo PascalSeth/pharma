@@ -45,8 +45,8 @@ const DrugEntries = () => {
       );
   
       setDrugs(strictFilteredDrugs);
-      setTotalDrugs(strictFilteredDrugs.length);
-      setDrugsWithImages(strictFilteredDrugs.filter((drug:Drug) => drug.imageUrl).length);
+      setTotalDrugs(data.totalDrugs);
+      setDrugsWithImages(data.drugsWithImages);
     } catch (error) {
       console.error("Error fetching drugs:", error);
     } finally {
