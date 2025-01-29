@@ -1,40 +1,30 @@
+import prisma from "@/lib/db";
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
 
 export async function GET(request: Request) {
   try {
     console.log("Incoming request URL:", request.url);
-
+    
     const url = new URL(request.url);
     const letter = url.searchParams.get("letter")?.charAt(0) || "";
-    if (!letter.match(/^[a-zA-Z]$/)) { // Ensures only single alphabets
-      return NextResponse.json(
-        { error: "Invalid 'letter' query parameter. Must be a single letter." },
-        { status: 400 }
+    if (!letter.match(/^[a-zA-Z]$/)) {
+      return new NextResponse(
+        JSON.stringify({ error: "Invalid 'letter' query parameter. Must be a single letter." }),
+        { status: 400, headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" } }
       );
     }
-    
+
     console.log("Extracted letter:", letter);
-
-    if (!letter || letter.length !== 1) {
-      console.error("Invalid letter parameter:", letter);
-      return NextResponse.json(
-        { error: "Invalid or missing 'letter' query parameter" },
-        { status: 400 }
-      );
-    }
-
-    // Ensure that the letter is case-insensitive and only fetch names starting with that letter
+    
+    // Fetch drugs ensuring names start with the given letter (case-insensitive)
     const drugs = await prisma.drugList.findMany({
       where: {
-        OR: [{ imageUrl: null }, { imageUrl: "" }],
         name: {
-          // Ensure the name starts with the provided letter (case-insensitive)
-startsWith: letter.toLowerCase(),
+          startsWith: letter,
           mode: "insensitive",
         },
+        OR: [{ imageUrl: null }, { imageUrl: "" }],
       },
       take: 10,
       select: {
@@ -46,10 +36,11 @@ startsWith: letter.toLowerCase(),
       },
     });
 
+    // Count drugs with images
     const drugsWithImages = await prisma.drugList.count({
       where: {
         name: {
-startsWith: letter.toLowerCase(),
+          startsWith: letter,
           mode: "insensitive",
         },
         imageUrl: {
@@ -59,25 +50,25 @@ startsWith: letter.toLowerCase(),
       },
     });
 
+    // Count total drugs
     const totalDrugs = await prisma.drugList.count({
       where: {
         name: {
-startsWith: letter.toLowerCase(),
+          startsWith: letter,
           mode: "insensitive",
         },
       },
     });
 
-    return NextResponse.json(
-      {
-        drugs,
-        totalDrugs,
-        drugsWithImages,
-      },
-      { status: 200 }
+    return new NextResponse(
+      JSON.stringify({ drugs, totalDrugs, drugsWithImages }),
+      { status: 200, headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" } }
     );
   } catch (error) {
     console.error("Error fetching drugs:", error);
-    return NextResponse.json({ error: "Failed to fetch drugs" }, { status: 500 });
+    return new NextResponse(
+      JSON.stringify({ error: "Failed to fetch drugs" }),
+      { status: 500, headers: { "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate" } }
+    );
   }
 }
