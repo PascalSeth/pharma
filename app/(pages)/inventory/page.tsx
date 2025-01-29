@@ -100,7 +100,7 @@ export default function PharmacyInventory() {
         if (!response.ok) throw new Error("Failed to fetch inventory data.");
         const inventoryData: InventoryItem[] = await response.json();
         setData(inventoryData);
-      }  catch (error) {
+      } catch (error) {
         setError(error instanceof Error ? error.message : "Unknown error");
       } finally {
         setIsLoading(false);
@@ -109,19 +109,12 @@ export default function PharmacyInventory() {
     fetchInventory();
   }, []);
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div className="text-red-500">Error: {error}</div>;
-
-
   const columns: ColumnDef<InventoryItem>[] = [
     {
       id: "select",
       header: ({ table }) => (
         <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
+          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
         />
@@ -138,12 +131,12 @@ export default function PharmacyInventory() {
     },
     {
       id: "drugName",
-      accessorFn: (row) => row.drugList.name,  // Changed from accessorKey to accessorFn
+      accessorFn: (row) => row.drugList.name,
       header: "Item Name",
       cell: ({ row }) => (
         <div className="flex items-center">
           <img
-            src={row.original.drugList.imageUrl ||  'https://i.pinimg.com/736x/ca/df/aa/cadfaac7ed2abf8052db94d540808e60.jpg'}
+            src={row.original.drugList.imageUrl || "https://i.pinimg.com/736x/ca/df/aa/cadfaac7ed2abf8052db94d540808e60.jpg"}
             alt={row.original.drugList.name}
             className="w-10 h-10 rounded-full mr-4"
           />
@@ -168,7 +161,7 @@ export default function PharmacyInventory() {
     },
     {
       id: "actions",
-      cell: ({ row }) => (
+      cell: () => (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
@@ -199,17 +192,21 @@ export default function PharmacyInventory() {
     state: { sorting, columnFilters, columnVisibility },
   });
 
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div className="text-red-500">Error: {error}</div>;
+
   return (
     <div className="bg-white w-full p-6 h-full shadow-lg flex flex-col">
-      <Link className="w-fit" href='/inventory/add-inventory'>
-      <Button className="w-fit items-end" variant="outline">
-      Add Inventory
-      </Button></Link>
+      <Link className="w-fit" href="/inventory/add-inventory">
+        <Button className="w-fit items-end" variant="outline">
+          Add Inventory
+        </Button>
+      </Link>
       <div className="flex justify-between items-center mb-6">
         <div className="font-semibold text-lg">Pharmacy Inventory</div>
         <div className="flex items-center space-x-4">
           <Select
-          value={selectedCategory}
+            value={selectedCategory}
             onValueChange={(value) => {
               setSelectedCategory(value === "all" ? "" : value);
               table.getColumn("category")?.setFilterValue(value === "all" ? "" : value);

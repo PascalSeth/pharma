@@ -80,8 +80,7 @@ const columns: ColumnDef<Supplier>[] = [
   {
     id: "actions",
     header: "Actions",
-    cell: ({ row }) => {
-      const supplier = row.original;
+    cell: () => {
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -143,6 +142,8 @@ export default function SuppliersDataTable() {
     onRowSelectionChange: setRowSelection,
     state: { sorting, columnFilters, columnVisibility, rowSelection },
   });
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div className="text-red-500">Error: {error}</div>;
 
   return (
     <div className="bg-white w-full p-6 h-full shadow-lg flex flex-col">

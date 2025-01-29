@@ -13,12 +13,12 @@ export async function CreateTransaction(formData: FormData) {
     // Extract transactions data from formData
     const transactions = Array.from(formData.entries())
       .filter(([key]) => key.startsWith("transactions"))
-      .reduce<Record<string, Record<string, any>>>((acc, [key, value]) => {
+      .reduce<Record<string, Record<string, string>>>((acc, [key, value]) => {
         const match = key.match(/transactions\[(\d+)\]\[(\w+)\]/);
         if (match) {
           const [, index, field] = match;
           if (!acc[index]) acc[index] = {};
-          acc[index][field] = value;
+          acc[index][field] = String(value);  // Ensure value is a string
         }
         return acc;
       }, {});
@@ -31,7 +31,7 @@ export async function CreateTransaction(formData: FormData) {
       drugId: transaction.drugId,
       totalAmount: parseFloat(transaction.totalAmount),
       quantity: parseInt(transaction.quantity, 10),
-      dosage: transaction.dosage || null,
+      dosage: transaction.dosage || "",  // Ensure dosage is never null
     }));
 
     // Log final transactionData array

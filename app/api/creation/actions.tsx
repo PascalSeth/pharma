@@ -2,7 +2,7 @@
 
 import prisma from "@/lib/db";
 import { getKindeServerSession } from "@kinde-oss/kinde-auth-nextjs/server";
-import { Gender, Role } from "@prisma/client"; // Assuming Gender and Role are enums in your Prisma schema
+import { Gender } from "@prisma/client"; // Assuming Gender and Role are enums in your Prisma schema
 
 export async function CreateAdmin(formData: FormData): Promise<void> {
   const {getUser} = getKindeServerSession()
