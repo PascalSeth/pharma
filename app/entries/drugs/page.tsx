@@ -22,7 +22,7 @@ type Drug = {
 const DrugEntries = () => {
   const [submitLoading, setSubmitLoading] = useState(false);
   const searchParams = useSearchParams();
-  const letter = searchParams.get("letter") || "";
+  const letter = searchParams.get("letter") ;
   const [drugs, setDrugs] = useState<Drug[]>([]);
   const [totalDrugs, setTotalDrugs] = useState(0);
   const [drugsWithImages, setDrugsWithImages] = useState(0);
