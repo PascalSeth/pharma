@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   Table,
@@ -85,25 +85,25 @@ const DrugEntries = () => {
       alert("Please select images for all missing entries before submitting.");
       return;
     }
-  
+
     setSubmitLoading(true);
-  
+
     try {
       const uploadPromises = Object.entries(selectedImages).map(async ([id, file]) => {
         if (!file) return;
-  
+
         const formData = new FormData();
         formData.append("image", file);
         formData.append("id", id);
-  
+
         return fetch(`/entries/POST`, {
           method: "POST",
           body: formData,
         });
       });
-  
+
       await Promise.all(uploadPromises);
-  
+
       // Reload the page after submission
       window.location.reload();
     } catch (error) {
@@ -112,13 +112,13 @@ const DrugEntries = () => {
       setSubmitLoading(false);
     }
   };
-  
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-6">
       <h1 className="text-3xl font-bold text-gray-800 mb-4">
         Drugs Starting with {letter}
       </h1>
+
       {loading ? (
         <p className="text-gray-600">Loading...</p>
       ) : (
@@ -182,4 +182,12 @@ const DrugEntries = () => {
   );
 };
 
-export default DrugEntries;
+const ParentComponent = () => {
+  return (
+    <Suspense fallback={<p className="text-gray-600">Loading data...</p>}>
+      <DrugEntries />
+    </Suspense>
+  );
+};
+
+export default ParentComponent;
