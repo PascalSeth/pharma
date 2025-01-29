@@ -20,8 +20,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { Gender, Role } from "@prisma/client";
-import {RegisterLink, LoginLink} from "@kinde-oss/kinde-auth-nextjs/components";
+import { Gender, } from "@prisma/client";
 import { CreateAdmin } from "@/app/api/creation/actions";
 
 export default function AdminSheet() {
@@ -146,14 +145,11 @@ export default function AdminSheet() {
           {/* Footer Section */}
           <SheetFooter>
             <SheetClose asChild>
-              <RegisterLink
-               authUrlParams= {
-{                connection_id: "conn_01948b0803cc701037e5562f33e30e5c"
-}              }
+              <Button
               >
                             Save Admin
 
-              </RegisterLink>
+              </Button>
             </SheetClose>
           </SheetFooter>
         </form>

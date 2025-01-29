@@ -1,20 +1,20 @@
 'use client';
-import React, { useEffect, useState } from 'react';
-import { ShoppingBasket, Trash } from 'lucide-react';
 import {
   Select,
   SelectContent,
   SelectGroup,
   SelectItem,
   SelectLabel,
-  SelectValue,
   SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import { DrugCategory } from '@prisma/client';
-import { Input } from '@/components/ui/input';
-import SkeletonHomeComponent from '../components/SkeletonoHome';
-import Outofstock from '../components/Outofstock';
+import { ShoppingBasket, Trash } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { CreateTransaction } from '../api/POST/createTransaction/action';
+import Outofstock from '../components/Outofstock';
+import SkeletonHomeComponent from '../components/SkeletonoHome';
+import { Input } from '@/components/ui/input';
 
 interface DrugList {
   id: string;
@@ -181,7 +181,7 @@ function Home() {
         <a href="#" className="text-green-600">See all</a>
       </div>
 
-      <input
+      <Input
         type="text"
         placeholder="Search by drug name..."
         className="w-full p-2 border rounded mb-4"

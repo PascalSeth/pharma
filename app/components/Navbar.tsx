@@ -1,5 +1,4 @@
-import {RegisterLink, LoginLink} from "@kinde-oss/kinde-auth-nextjs/components";
-import React from 'react';
+import { LoginLink } from "@kinde-oss/kinde-auth-nextjs/components";
 
 type User = {
   picture?: string | null;  // Allow `null` here

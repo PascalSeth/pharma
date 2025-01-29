@@ -10,9 +10,8 @@ type InventoryItem = {
   expirationDate: string;
 };
 
-type Props = {};
 
-function Outofstock({}: Props) {
+function Outofstock() {
   const [outOfStockItems, setOutOfStockItems] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);

@@ -100,7 +100,7 @@ export default function PharmacyInventory() {
         if (!response.ok) throw new Error("Failed to fetch inventory data.");
         const inventoryData: InventoryItem[] = await response.json();
         setData(inventoryData);
-      } catch (error) {
+      }  catch (error) {
         setError(error instanceof Error ? error.message : "Unknown error");
       } finally {
         setIsLoading(false);
@@ -108,6 +108,10 @@ export default function PharmacyInventory() {
     };
     fetchInventory();
   }, []);
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div className="text-red-500">Error: {error}</div>;
+
 
   const columns: ColumnDef<InventoryItem>[] = [
     {
@@ -205,6 +209,7 @@ export default function PharmacyInventory() {
         <div className="font-semibold text-lg">Pharmacy Inventory</div>
         <div className="flex items-center space-x-4">
           <Select
+          value={selectedCategory}
             onValueChange={(value) => {
               setSelectedCategory(value === "all" ? "" : value);
               table.getColumn("category")?.setFilterValue(value === "all" ? "" : value);

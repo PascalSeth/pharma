@@ -3,9 +3,9 @@ import Link from 'next/link';
 import React from 'react';
 import { usePathname } from 'next/navigation'; // Import usePathname for dynamic route detection
 
-type Props = {};
 
-function Sidebar({}: Props) {
+
+function Sidebar() {
   const pathname = usePathname(); // Get the current pathname
 
   const mainMenuItems = [
