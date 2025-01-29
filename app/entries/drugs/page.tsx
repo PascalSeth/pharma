@@ -132,8 +132,6 @@ const fetchDrugs = async () => {
               <TableRow className="bg-gray-200">
                 <TableHead>#</TableHead>
                 <TableHead>Drug Name</TableHead>
-                <TableHead>Substitutes</TableHead>
-                <TableHead>Side Effects</TableHead>
                 <TableHead>Uses</TableHead>
                 <TableHead>Image</TableHead>
               </TableRow>
@@ -143,8 +141,6 @@ const fetchDrugs = async () => {
                 <TableRow key={drug.id}>
                   <TableCell>{index + 1}</TableCell>
                   <TableCell>{drug.name}</TableCell>
-                  <TableCell>{drug.substitutes.join(", ")}</TableCell>
-                  <TableCell>{drug.sideEffects.join(", ")}</TableCell>
                   <TableCell>{drug.uses.join(", ")}</TableCell>
                   <TableCell>
                     {drug.imageUrl ? (
