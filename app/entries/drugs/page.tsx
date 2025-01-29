@@ -38,9 +38,15 @@ const DrugEntries = () => {
     try {
       const response = await fetch(`/entries/GET?letter=${letter}`);
       const data = await response.json();
-      setDrugs(data.drugs);
-      setTotalDrugs(data.totalDrugs);
-      setDrugsWithImages(data.drugsWithImages);
+  
+      // Ensure only drugs that start exactly with the selected letter
+      const strictFilteredDrugs = data.drugs.filter((drug: Drug) =>
+        drug.name.charAt(0).toLowerCase() === letter.toLowerCase()
+      );
+  
+      setDrugs(strictFilteredDrugs);
+      setTotalDrugs(strictFilteredDrugs.length);
+      setDrugsWithImages(strictFilteredDrugs.filter((drug:Drug) => drug.imageUrl).length);
     } catch (error) {
       console.error("Error fetching drugs:", error);
     } finally {
