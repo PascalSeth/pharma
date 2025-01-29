@@ -39,11 +39,9 @@ const DrugEntries = () => {
   
         const response = await fetch(`/entries/GET?letter=${letter}`);
         const data = await response.json();
-        const filteredDrugs = data.drugs.filter((drug: Drug) =>
-          drug.name.toLowerCase().startsWith(letter.toLowerCase())
-        );
+ 
     
-        setDrugs(filteredDrugs);
+        setDrugs(data.drugs);
         setTotalDrugs(data.totalDrugs);
         setDrugsWithImages(data.drugsWithImages);
       } catch (error) {
