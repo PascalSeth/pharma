@@ -8,8 +8,14 @@ export async function GET(request: Request) {
     console.log("Incoming request URL:", request.url);
 
     const url = new URL(request.url);
-    const letter = url.searchParams.get("letter");
-
+    const letter = url.searchParams.get("letter")?.charAt(0) || "";
+    if (!letter.match(/^[a-zA-Z]$/)) { // Ensures only single alphabets
+      return NextResponse.json(
+        { error: "Invalid 'letter' query parameter. Must be a single letter." },
+        { status: 400 }
+      );
+    }
+    
     console.log("Extracted letter:", letter);
 
     if (!letter || letter.length !== 1) {
@@ -26,7 +32,7 @@ export async function GET(request: Request) {
         OR: [{ imageUrl: null }, { imageUrl: "" }],
         name: {
           // Ensure the name starts with the provided letter (case-insensitive)
-          startsWith: letter,
+startsWith: letter.toLowerCase(),
           mode: "insensitive",
         },
       },
@@ -43,7 +49,7 @@ export async function GET(request: Request) {
     const drugsWithImages = await prisma.drugList.count({
       where: {
         name: {
-          startsWith: letter,
+startsWith: letter.toLowerCase(),
           mode: "insensitive",
         },
         imageUrl: {
@@ -56,7 +62,7 @@ export async function GET(request: Request) {
     const totalDrugs = await prisma.drugList.count({
       where: {
         name: {
-          startsWith: letter,
+startsWith: letter.toLowerCase(),
           mode: "insensitive",
         },
       },
