@@ -9,18 +9,20 @@ export async function GET(request: Request) {
     const letter = url.searchParams.get("letter"); // Get the letter query parameter
 
     if (!letter || letter.length !== 1) {
-      return NextResponse.json({ error: "Invalid or missing 'letter' query parameter" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid or missing 'letter' query parameter" },
+        { status: 400 }
+      );
     }
 
     const drugs = await prisma.drugList.findMany({
       where: {
-        OR: [
-          { imageUrl: null }, // Fetch drugs where imageUrl is null
-          { imageUrl: "" },   // Fetch drugs where imageUrl is an empty string
+        AND: [
+          { name: { startsWith: letter, mode: "insensitive" } },
+          {
+            OR: [{ imageUrl: null }, { imageUrl: "" }],
+          },
         ],
-        name: {
-          startsWith: letter, // Filter drugs starting with the provided letter (case-insensitive)
-          mode: 'insensitive',        },
       },
       take: 10, // Limit to 10 results
       select: {
@@ -39,35 +41,39 @@ export async function GET(request: Request) {
       },
     });
 
-   // Get the total number of drugs with images
-   const drugsWithImages = await prisma.drugList.count({
-    where: {
-      name: {
-        startsWith: letter,
-        mode: 'insensitive',
+    // Get the total number of drugs with images
+    const drugsWithImages = await prisma.drugList.count({
+      where: {
+        AND: [
+          { name: { startsWith: letter, mode: "insensitive" } },
+          {
+            imageUrl: {
+              not: null, // Ensure imageUrl is not null
+            },
+          },
+          { imageUrl: { not: "" } }, // Ensure imageUrl is not an empty string
+        ],
       },
-      imageUrl: {
-        not: null,  // Ensure imageUrl is not null
-      },
-      AND: [
-        { imageUrl: { not: "" } },  // Ensure imageUrl is not an empty string
-      ],
-    },
-  });
-  
+    });
+
     // Get the total number of drugs
     const totalDrugs = await prisma.drugList.count({
       where: {
         name: {
           startsWith: letter,
-          mode: 'insensitive',
+          mode: "insensitive",
         },
       },
     });
-  return NextResponse.json({      drugs,
-    totalDrugs,
-    drugsWithImages,
-},{ status: 200 });
+
+    return NextResponse.json(
+      {
+        drugs,
+        totalDrugs,
+        drugsWithImages,
+      },
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error fetching drugs:", error);
     return NextResponse.json({ error: "Failed to fetch drugs" }, { status: 500 });
