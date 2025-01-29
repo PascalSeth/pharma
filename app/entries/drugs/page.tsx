@@ -38,12 +38,7 @@ const fetchDrugs = async () => {
   try {
     const response = await fetch(`/entries/GET?letter=${letter}`);
     const data = await response.json();
-    // Ensure only drugs that start exactly with the selected letter (case-insensitive)
-    const strictFilteredDrugs = data.drugs.filter((drug: Drug) =>
-      drug.name.charAt(0).toLowerCase() === letter.toLowerCase()
-    );
-
-    setDrugs(strictFilteredDrugs);
+    setDrugs(data.drugs);
     setTotalDrugs(data.totalDrugs);
     setDrugsWithImages(data.drugsWithImages);
   } catch (error) {
