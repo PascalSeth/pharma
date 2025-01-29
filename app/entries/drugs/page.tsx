@@ -32,19 +32,11 @@ const DrugEntries = () => {
   const halfTotalDrugs = Math.floor(totalDrugs / 2);
 
   const fetchDrugs = async () => {
-    if (!letter || letter.length !== 1) return; // Ensure only a single letter is used
-    
     setLoading(true);
     try {
       const response = await fetch(`/entries/GET?letter=${letter}`);
       const data = await response.json();
-  
-      // Filter again in case the backend doesn't strictly enforce it
-      const filteredDrugs = data.drugs.filter((drug: Drug) =>
-        drug.name.toLowerCase().startsWith(letter.toLowerCase())
-      );
-  
-      setDrugs(filteredDrugs);
+      setDrugs(data.drugs);
       setTotalDrugs(data.totalDrugs);
       setDrugsWithImages(data.drugsWithImages);
     } catch (error) {
@@ -53,7 +45,6 @@ const DrugEntries = () => {
       setLoading(false);
     }
   };
-  
 
   useEffect(() => {
     fetchDrugs();
