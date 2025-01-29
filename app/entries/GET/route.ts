@@ -20,11 +20,12 @@ export async function GET(request: Request) {
       );
     }
 
-
+    // Ensure that the letter is case-insensitive and only fetch names starting with that letter
     const drugs = await prisma.drugList.findMany({
       where: {
         OR: [{ imageUrl: null }, { imageUrl: "" }],
         name: {
+          // Ensure the name starts with the provided letter (case-insensitive)
           startsWith: letter,
           mode: "insensitive",
         },
@@ -33,13 +34,11 @@ export async function GET(request: Request) {
       select: {
         id: true,
         name: true,
-
       },
       orderBy: {
         name: "asc",
       },
     });
-
 
     const drugsWithImages = await prisma.drugList.count({
       where: {
@@ -54,7 +53,6 @@ export async function GET(request: Request) {
       },
     });
 
-
     const totalDrugs = await prisma.drugList.count({
       where: {
         name: {
@@ -63,7 +61,6 @@ export async function GET(request: Request) {
         },
       },
     });
-
 
     return NextResponse.json(
       {
