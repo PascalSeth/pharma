@@ -33,26 +33,21 @@ const DrugEntries = () => {
   const [selectedImages, setSelectedImages] = useState<Record<string, File | null>>({});
 
   const halfTotalDrugs = Math.floor(totalDrugs / 2);
+const fetchDrugs = async () => {
+  setLoading(true);
+  try {
+    const response = await fetch(`/entries/GET?letter=${letter}`);
+    const data = await response.json();
+    setDrugs(data.drugs.filter((drug: Drug) => drug.name.startsWith(letter)));
+    setTotalDrugs(data.totalDrugs);
+    setDrugsWithImages(data.drugsWithImages);
+  } catch (error) {
+    console.error("Error fetching drugs:", error);
+  } finally {
+    setLoading(false);
+  }
+};
 
-  const fetchDrugs = async () => {
-    try {
-      const response = await fetch(`/entries/GET?letter=${letter}`);
-      const data = await response.json();
-  
-      // Ensure only drugs that start exactly with the selected letter
-      const strictFilteredDrugs = data.drugs.filter((drug: Drug) =>
-        drug.name.charAt(0).toLowerCase() === letter.toLowerCase()
-      );
-  
-      setDrugs(strictFilteredDrugs);
-      setTotalDrugs(data.totalDrugs);
-      setDrugsWithImages(data.drugsWithImages);
-    } catch (error) {
-      console.error("Error fetching drugs:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
     fetchDrugs();
@@ -112,6 +107,8 @@ const DrugEntries = () => {
 
       // Reload the page after submission
       window.location.reload();
+      await fetchDrugs();
+
     } catch (error) {
       console.error("Submission error:", error);
     } finally {
