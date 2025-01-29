@@ -130,7 +130,6 @@ const fetchDrugs = async () => {
               <TableRow className="bg-gray-200">
                 <TableHead>#</TableHead>
                 <TableHead>Drug Name</TableHead>
-                <TableHead>Uses</TableHead>
                 <TableHead>Image</TableHead>
               </TableRow>
             </TableHeader>
