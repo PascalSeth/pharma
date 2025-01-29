@@ -44,7 +44,6 @@ const DrugEntries = () => {
         );
     
         setDrugs(filteredDrugs);
-        setDrugs(filteredDrugs);
         setTotalDrugs(data.totalDrugs);
         setDrugsWithImages(data.drugsWithImages);
       } catch (error) {
