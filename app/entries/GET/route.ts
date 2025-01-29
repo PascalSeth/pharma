@@ -30,7 +30,7 @@ export async function GET(request: Request) {
           mode: "insensitive",
         },
       },
-      take: 1,
+      take: 10,
       select: {
         id: true,
         name: true,
