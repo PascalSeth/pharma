@@ -20,7 +20,6 @@ export async function GET(request: Request) {
       );
     }
 
-    console.log("Querying database with letter:", letter);
 
     const drugs = await prisma.drugList.findMany({
       where: {
@@ -30,7 +29,7 @@ export async function GET(request: Request) {
           mode: "insensitive",
         },
       },
-      take: 10,
+      take: 1,
       select: {
         id: true,
         name: true,
@@ -41,7 +40,6 @@ export async function GET(request: Request) {
       },
     });
 
-    console.log("Fetched drugs:", drugs);
 
     const drugsWithImages = await prisma.drugList.count({
       where: {
@@ -56,7 +54,6 @@ export async function GET(request: Request) {
       },
     });
 
-    console.log("Drugs with images:", drugsWithImages);
 
     const totalDrugs = await prisma.drugList.count({
       where: {
@@ -67,7 +64,6 @@ export async function GET(request: Request) {
       },
     });
 
-    console.log("Total drugs:", totalDrugs);
 
     return NextResponse.json(
       {

@@ -13,6 +13,12 @@ export async function POST(request: Request) {
     const drugListId = formData.get("id") as string;
     console.log("Drug List ID:", drugListId);
 
+    // Validate file type
+    const fileType = file.type.split("/")[0];
+    if (fileType !== "image") {
+      return NextResponse.json({ message: "Only image files are allowed" }, { status: 400 });
+    }
+
     if (!file || !(file instanceof Blob)) {
       return NextResponse.json({ message: "No valid file uploaded" }, { status: 400 });
     }
@@ -36,7 +42,9 @@ export async function POST(request: Request) {
     const drugName = drugList.name;
     const firstLetter = drugName.charAt(0).toUpperCase();
 
-    const fileName = `${drugName}-${Date.now()}`;
+    // Sanitize the drug name to prevent special characters or spaces
+    const sanitizedDrugName = drugName.replace(/[^a-z0-9]/gi, '-').toLowerCase();
+    const fileName = `${sanitizedDrugName}-${Date.now()}`;
     const folderPath = `drugLists/${firstLetter}/${fileName}`;
 
     // Upload the image to Supabase
@@ -49,7 +57,7 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error("Supabase upload error:", error);
-      return NextResponse.json({ message: error.message }, { status: 500 });
+      return NextResponse.json({ message: `Upload failed: ${error.message}` }, { status: 500 });
     }
 
     console.log("Supabase upload success:", imageData);

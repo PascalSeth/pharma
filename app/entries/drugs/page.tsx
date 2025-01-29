@@ -16,7 +16,6 @@ import {
 type Drug = {
   id: string;
   name: string;
-
   imageUrl?: string | null;
 };
 
@@ -31,21 +30,21 @@ const DrugEntries = () => {
   const [selectedImages, setSelectedImages] = useState<Record<string, File | null>>({});
 
   const halfTotalDrugs = Math.floor(totalDrugs / 2);
-const fetchDrugs = async () => {
-  setLoading(true);
-  try {
-    const response = await fetch(`/entries/GET?letter=${letter}`);
-    const data = await response.json();
-    setDrugs(data.drugs);
-    setTotalDrugs(data.totalDrugs);
-    setDrugsWithImages(data.drugsWithImages);
-  } catch (error) {
-    console.error("Error fetching drugs:", error);
-  } finally {
-    setLoading(false);
-  }
-};
 
+  const fetchDrugs = async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/entries/GET?letter=${letter}`);
+      const data = await response.json();
+      setDrugs(data.drugs);
+      setTotalDrugs(data.totalDrugs);
+      setDrugsWithImages(data.drugsWithImages);
+    } catch (error) {
+      console.error("Error fetching drugs:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     fetchDrugs();
@@ -95,17 +94,26 @@ const fetchDrugs = async () => {
         formData.append("image", file);
         formData.append("id", id);
 
-        return fetch(`/entries/POST`, {
+        const response = await fetch(`/entries/POST`, {
           method: "POST",
           body: formData,
         });
+
+        const result = await response.json(); // Parse the response
+        console.log("Upload result:", result);
+
+        if (!response.ok) {
+          // This handles the error case
+          throw new Error(result.message || `Error uploading image for drug with ID ${id}`);
+        }
       });
 
+      // Wait for all uploads to finish
       await Promise.all(uploadPromises);
 
       // Reload the page after submission
       window.location.reload();
-      await fetchDrugs();
+      await fetchDrugs(); // Refresh the drugs data
 
     } catch (error) {
       console.error("Submission error:", error);
