@@ -88,8 +88,7 @@ const columns: ColumnDef<UserData>[] = [
   {
     id: "actions",
     header: "Actions",
-    cell: ({ row }) => {
-      const userData = row.original;
+    cell: () => {
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>

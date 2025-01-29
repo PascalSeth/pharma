@@ -36,7 +36,7 @@ export default function DrugInventoryPage() {
     setAlternateForms([...alternateForms, { packagingType: "", sellingPrice: 0,quantity:0 }]);
   };
 
-  const handleUpdateAlternateForm = (index: number, field: string, value: any) => {
+  const handleUpdateAlternateForm = (index: number, field: string, value: string|number) => {
     const updatedForms = [...alternateForms];
     updatedForms[index] = { ...updatedForms[index], [field]: value };
     setAlternateForms(updatedForms);
