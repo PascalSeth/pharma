@@ -106,7 +106,7 @@ function Drugs() {
       <h1 className="text-2xl font-semibold mb-6 text-center">Drugs List</h1>
       <form onSubmit={handleSubmit} className="space-y-6">
         <Table className="min-w-full bg-white shadow-lg rounded-lg">
-          <TableCaption>List of drugs starting with {letter}</TableCaption>
+          <TableCaption>List of drugs starting with "{letter}"</TableCaption>
           <TableHeader>
             <TableRow>
               <TableHead className="text-left text-sm font-medium text-gray-700">Image</TableHead>
@@ -117,6 +117,7 @@ function Drugs() {
             {drugs.map((drug) => (
               <TableRow key={drug.id} className="hover:bg-gray-100">
                 <TableCell className="p-3 flex items-center space-x-3">
+                  <img src={drug.imageUrl} alt={drug.name} width={50} className="rounded-md" />
                   <input 
                     type="file" 
                     accept="image/*" 
@@ -146,4 +147,11 @@ function Drugs() {
   );
 }
 
-export default Drugs;
+// Wrapping the Drugs component with Suspense boundary
+export default function DrugsWithSuspense() {
+  return (
+    <React.Suspense fallback={<div>Loading...</div>}>
+      <Drugs />
+    </React.Suspense>
+  );
+}
