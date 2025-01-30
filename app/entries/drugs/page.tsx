@@ -151,4 +151,10 @@ function Drugs() {
   );
 }
 
-export default Drugs;
+export default function DrugsWithSuspense() {
+  return (
+    <React.Suspense fallback={<div>Loading...</div>}>
+      <Drugs />
+    </React.Suspense>
+  );
+}
