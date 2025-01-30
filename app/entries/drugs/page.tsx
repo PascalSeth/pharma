@@ -106,7 +106,7 @@ function Drugs() {
       <h1 className="text-2xl font-semibold mb-6 text-center">Drugs List</h1>
       <form onSubmit={handleSubmit} className="space-y-6">
         <Table className="min-w-full bg-white shadow-lg rounded-lg">
-          <TableCaption>List of drugs starting with "{letter}"</TableCaption>
+          <TableCaption>List of drugs starting with {letter}</TableCaption>
           <TableHeader>
             <TableRow>
               <TableHead className="text-left text-sm font-medium text-gray-700">Image</TableHead>
