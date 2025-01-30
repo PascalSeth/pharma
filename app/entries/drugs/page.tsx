@@ -1,13 +1,12 @@
-"use client";
+'use client';
 
-import { Suspense, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Table,
   TableBody,
   TableCaption,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -16,185 +15,135 @@ import {
 type Drug = {
   id: string;
   name: string;
-  imageUrl?: string | null;
+  imageUrl: string;
 };
 
-const DrugEntries = () => {
-  const [submitLoading, setSubmitLoading] = useState(false);
-  const searchParams = useSearchParams();
-  const letter = searchParams.get("letter") ;
-  const [drugs, setDrugs] = useState<Drug[]>([]);
-  const [totalDrugs, setTotalDrugs] = useState(0);
-  const [drugsWithImages, setDrugsWithImages] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [selectedImages, setSelectedImages] = useState<Record<string, File | null>>({});
+type ImageState = {
+  [key: string]: File | null;
+};
 
-  const halfTotalDrugs = Math.floor(totalDrugs / 2);
+function Drugs() {
+  const searchParams = useSearchParams();
+  const letter = searchParams.get('letter')?.charAt(0).toUpperCase() || 'A'; // Default letter if not provided
+  const [drugs, setDrugs] = useState<Drug[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedImages, setSelectedImages] = useState<ImageState>({});
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    const fetchDrugs = async () => {
-      setLoading(true);
+    async function fetchDrugs() {
       try {
-        if (!letter) return;
-  
+        if (!/^[A-Z]$/.test(letter)) {
+          throw new Error('Invalid letter parameter');
+        }
         const response = await fetch(`/entries/GET?letter=${letter}`);
+        if (!response.ok) throw new Error('Failed to fetch drugs');
         const data = await response.json();
- 
-    
-        setDrugs(data.drugs);
-        setTotalDrugs(data.totalDrugs);
-        setDrugsWithImages(data.drugsWithImages);
+        
+        if (Array.isArray(data.drugs)) {
+          setDrugs(data.drugs.slice(0, 10).filter((drug: Drug) => drug.name.charAt(0).toUpperCase() === letter)); // Ensure first character matches
+        } else {
+          console.error('Unexpected response format:', data);
+          setDrugs([]);
+        }
       } catch (error) {
-        console.error("Error fetching drugs:", error);
+        console.error(error);
       } finally {
         setLoading(false);
       }
-    };
-  
+    }
+
     fetchDrugs();
   }, [letter]);
-  
 
-  const allImagesSelected = () => {
-    return drugs.every((drug) => drug.imageUrl || selectedImages[drug.id]);
-  };
-
-  // Handle image selection (but not upload)
-  const handleImageSelection = (e: React.ChangeEvent<HTMLInputElement>, id: string) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setSelectedImages((prev) => ({
-      ...prev,
-      [id]: file,
+  function handleImageChange(event: React.ChangeEvent<HTMLInputElement>, drugId: string) {
+    const file = event.target.files?.[0] || null;
+    setSelectedImages(prevState => ({
+      ...prevState,
+      [drugId]: file,
     }));
+  }
 
-    // Preview the image before upload
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const imageUrl = reader.result as string;
-      setDrugs((prevDrugs) =>
-        prevDrugs.map((drug) =>
-          drug.id === id ? { ...drug, imageUrl } : drug
-        )
-      );
-    };
-    reader.readAsDataURL(file);
-  };
+  function allImagesSelected(): boolean {
+    return drugs.every(drug => selectedImages[drug.id]);
+  }
 
-  // Upload all selected images on submit
-  const handleFinalSubmission = async () => {
-    if (!allImagesSelected()) {
-      alert("Please select images for all missing entries before submitting.");
-      return;
-    }
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    setSubmitting(true);
 
-    setSubmitLoading(true);
+    const formData = new FormData();
+
+    // Append images and ids to the form data
+    drugs.forEach((drug) => {
+      if (selectedImages[drug.id]) {
+        formData.append('image', selectedImages[drug.id]!);
+        formData.append('id', drug.id);
+      }
+    });
 
     try {
-      const uploadPromises = Object.entries(selectedImages).map(async ([id, file]) => {
-        if (!file) return;
-
-        const formData = new FormData();
-        formData.append("image", file);
-        formData.append("id", id);
-
-        const response = await fetch(`/entries/POST`, {
-          method: "POST",
-          body: formData,
-        });
-
-        const result = await response.json(); // Parse the response
-        console.log("Upload result:", result);
-
-        if (!response.ok) {
-          // This handles the error case
-          throw new Error(result.message || `Error uploading image for drug with ID ${id}`);
-        }
+      const response = await fetch('/entries/POST/', {
+        method: 'POST',
+        body: formData,
       });
 
-      // Wait for all uploads to finish
-      await Promise.all(uploadPromises);
+      if (!response.ok) throw new Error('Failed to submit');
 
-      // Reload the page after submission
-      window.location.reload();
-
+      alert('Images uploaded successfully');
     } catch (error) {
-      console.error("Submission error:", error);
+      console.error(error);
+      alert('Error while submitting');
     } finally {
-      setSubmitLoading(false);
+      setSubmitting(false);
     }
-  };
+  }
+
+  if (loading) return <div className="text-center text-lg text-gray-500">Loading...</div>;
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100 p-6">
-      <h1 className="text-3xl font-bold text-gray-800 mb-4">
-        Drugs Starting with {letter}
-      </h1>
-
-      {loading ? (
-        <p className="text-gray-600">Loading...</p>
-      ) : (
-        <div className="w-full max-w-5xl bg-white p-6 rounded-xl shadow-lg">
-          <Table>
-            <TableCaption>List of drugs where the image is missing.</TableCaption>
-            <TableHeader>
-              <TableRow className="bg-gray-200">
-                <TableHead>#</TableHead>
-                <TableHead>Drug Name</TableHead>
-                <TableHead>Image</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {drugs.map((drug, index) => (
-                <TableRow key={drug.id}>
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>{drug.name}</TableCell>
-                  <TableCell>
-                    {drug.imageUrl ? (
-                      <img src={drug.imageUrl} alt={drug.name} className="w-16 h-16 rounded-lg" />
-                    ) : (
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="border p-1 text-sm"
-                        onChange={(e) => handleImageSelection(e, drug.id)}
-                      />
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-            <TableFooter>
-              <TableRow>
-                <TableCell colSpan={6} className="text-right font-medium">
-                  Total Drugs: {totalDrugs} | Drugs with Images: {drugsWithImages}
-                  <p>Half Goal: {drugsWithImages}/{halfTotalDrugs}</p>
+    <div className="p-6 max-w-screen-xl mx-auto">
+      <h1 className="text-2xl font-semibold mb-6 text-center">Drugs List</h1>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <Table className="min-w-full bg-white shadow-lg rounded-lg">
+          <TableCaption>List of drugs starting with "{letter}"</TableCaption>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-left text-sm font-medium text-gray-700">Image</TableHead>
+              <TableHead className="text-left text-sm font-medium text-gray-700">Name</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {drugs.map((drug) => (
+              <TableRow key={drug.id} className="hover:bg-gray-100">
+                <TableCell className="p-3 flex items-center space-x-3">
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    name="image" 
+                    className="text-sm text-gray-500 border border-gray-300 rounded-lg py-1 px-2 focus:outline-none" 
+                    onChange={(e) => handleImageChange(e, drug.id)} 
+                  />
+                  {selectedImages[drug.id] && (
+                    <img src={URL.createObjectURL(selectedImages[drug.id]!)} alt="Selected" width={100} className="rounded-md" />
+                  )}
                 </TableCell>
+                <TableCell className="text-sm font-medium text-gray-700">{drug.name}</TableCell>
               </TableRow>
-            </TableFooter>
-          </Table>
-          <div className="mt-4">
-            <button
-              onClick={handleFinalSubmission}
-              className="px-4 py-2 bg-blue-500 text-white rounded-lg disabled:bg-gray-300"
-              disabled={submitLoading || !allImagesSelected()}
-            >
-              {submitLoading ? "Submitting..." : "Submit All Images"}
-            </button>
-          </div>
-        </div>
-      )}
+            ))}
+          </TableBody>
+        </Table>
+
+        <button 
+          type="submit" 
+          className={`w-full py-2 px-4 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none ${submitting || !allImagesSelected() ? 'opacity-50 cursor-not-allowed' : ''}`} 
+          disabled={submitting || !allImagesSelected()}
+        >
+          {submitting ? 'Submitting...' : 'Submit All'}
+        </button>
+      </form>
     </div>
   );
-};
+}
 
-const ParentComponent = () => {
-  return (
-    <Suspense fallback={<p className="text-gray-600">Loading data...</p>}>
-      <DrugEntries />
-    </Suspense>
-  );
-};
-
-export default ParentComponent;
+export default Drugs;

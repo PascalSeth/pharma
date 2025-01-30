@@ -24,9 +24,8 @@ export async function GET(request: Request) {
           startsWith: letter,
           mode: "insensitive",
         },
-        OR: [{ imageUrl: null }, { imageUrl: "" }],
+        OR: [{ imageUrl: null }, { imageUrl: "" }, ],
       },
-      take: 10,
       select: {
         id: true,
         name: true,
