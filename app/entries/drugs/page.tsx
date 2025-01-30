@@ -110,7 +110,7 @@ function Drugs() {
 
   return (
     <div className="p-6 max-w-screen-xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-6 text-center">Drugs List</h1>
+      <h1 className="text-2xl font-semibold mb-6 text-center">{letter}Drugs List</h1>
       <form onSubmit={handleSubmit} className="space-y-6">
         <Table className="min-w-full bg-white shadow-lg rounded-lg">
           <TableCaption>List of drugs starting with {letter}</TableCaption>
