@@ -30,29 +30,30 @@ function Drugs() {
   const [selectedImages, setSelectedImages] = useState<ImageState>({});
   const [submitting, setSubmitting] = useState(false);
 
-  useEffect(() => {
-    async function fetchDrugs() {
-      try {
-        if (!/^[A-Z]$/.test(letter)) {
-          throw new Error('Invalid letter parameter');
-        }
-        const response = await fetch(`/entries/GET?letter=${letter}`);
-        if (!response.ok) throw new Error('Failed to fetch drugs');
-        const data = await response.json();
-        
-        if (Array.isArray(data.drugs)) {
-          setDrugs(data.drugs.slice(0, 10).filter((drug: Drug) => drug.name.charAt(0).toUpperCase() === letter)); // Ensure first character matches
-        } else {
-          console.error('Unexpected response format:', data);
-          setDrugs([]);
-        }
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setLoading(false);
+  // Function to fetch drugs
+  async function fetchDrugs() {
+    try {
+      if (!/^[A-Z]$/.test(letter)) {
+        throw new Error('Invalid letter parameter');
       }
+      const response = await fetch(`/entries/GET?letter=${letter}`);
+      if (!response.ok) throw new Error('Failed to fetch drugs');
+      const data = await response.json();
+      
+      if (Array.isArray(data.drugs)) {
+        setDrugs(data.drugs.slice(0, 10).filter((drug: Drug) => drug.name.charAt(0).toUpperCase() === letter)); // Ensure first character matches
+      } else {
+        console.error('Unexpected response format:', data);
+        setDrugs([]);
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
+  }
 
+  useEffect(() => {
     fetchDrugs();
   }, [letter]);
 
@@ -90,7 +91,9 @@ function Drugs() {
 
       if (!response.ok) throw new Error('Failed to submit');
 
-      alert('Images uploaded successfully');
+      // Refetch drugs after successful submission
+      await fetchDrugs();
+      alert('Images uploaded and drugs list refreshed successfully');
     } catch (error) {
       console.error(error);
       alert('Error while submitting');
@@ -117,17 +120,18 @@ function Drugs() {
             {drugs.map((drug) => (
               <TableRow key={drug.id} className="hover:bg-gray-100">
                 <TableCell className="p-3 flex items-center space-x-3">
-                  <img src={drug.imageUrl} alt={drug.name} width={50} className="rounded-md" />
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    name="image" 
-                    className="text-sm text-gray-500 border border-gray-300 rounded-lg py-1 px-2 focus:outline-none" 
-                    onChange={(e) => handleImageChange(e, drug.id)} 
-                  />
-                  {selectedImages[drug.id] && (
-                    <img src={URL.createObjectURL(selectedImages[drug.id]!)} alt="Selected" width={100} className="rounded-md" />
-                  )}
+                  <div className='flex flex-col items-center'>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      name="image" 
+                      className="text-sm text-gray-500 border border-gray-300 rounded-lg py-1 px-2 focus:outline-none" 
+                      onChange={(e) => handleImageChange(e, drug.id)} 
+                    />
+                    {selectedImages[drug.id] && (
+                      <img src={URL.createObjectURL(selectedImages[drug.id]!)} alt="Selected" width={100} className="rounded-md" />
+                    )}  
+                  </div>
                 </TableCell>
                 <TableCell className="text-sm font-medium text-gray-700">{drug.name}</TableCell>
               </TableRow>
@@ -147,11 +151,4 @@ function Drugs() {
   );
 }
 
-// Wrapping the Drugs component with Suspense boundary
-export default function DrugsWithSuspense() {
-  return (
-    <React.Suspense fallback={<div>Loading...</div>}>
-      <Drugs />
-    </React.Suspense>
-  );
-}
+export default Drugs;
