@@ -76,28 +76,34 @@ function Drugs() {
   async function handleSubmit(event: React.FormEvent) {
     event.preventDefault();
     setSubmitting(true);
-
+  
     const formData = new FormData();
-
+  
     // Append images and ids to the form data
     drugs.forEach((drug) => {
       if (selectedImages[drug.id]) {
-        formData.append('image', selectedImages[drug.id]!);
-        formData.append('id', drug.id);
+        formData.append('images[]', selectedImages[drug.id]!); // Treating as array
+        formData.append('ids[]', drug.id);
       }
     });
-
+  
     try {
       const response = await fetch('/entries/POST/', {
         method: 'POST',
         body: formData,
       });
-
+  
       if (!response.ok) throw new Error('Failed to submit');
-
-      // Refetch drugs after successful submission
+  
+      // Clear selected images
+      setSelectedImages({});
+  
+      // Reload the page (hard refresh)
       window.location.reload();
+  
+      // Alternative: Refetch drugs instead of full reload
       await fetchDrugs();
+  
       alert('Images uploaded and drugs list refreshed successfully');
     } catch (error) {
       console.error(error);
@@ -106,6 +112,7 @@ function Drugs() {
       setSubmitting(false);
     }
   }
+  
 
   if (loading) return <div className="text-center text-lg text-gray-500">Loading...</div>;
 
