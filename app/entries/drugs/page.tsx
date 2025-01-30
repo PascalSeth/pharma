@@ -7,6 +7,7 @@ import {
   TableBody,
   TableCaption,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -29,7 +30,8 @@ function Drugs() {
   const [loading, setLoading] = useState(true);
   const [selectedImages, setSelectedImages] = useState<ImageState>({});
   const [submitting, setSubmitting] = useState(false);
-
+  const [total, setTotal] = useState(0);
+  const [drugsWithImages, setDrugsWithImages] = useState(0);
   // Function to fetch drugs
   async function fetchDrugs() {
     try {
@@ -42,6 +44,8 @@ function Drugs() {
       
       if (Array.isArray(data.drugs)) {
         setDrugs(data.drugs.slice(0, 10).filter((drug: Drug) => drug.name.charAt(0).toUpperCase() === letter)); // Ensure first character matches
+        setTotal(data.totalDrugs)
+        setDrugsWithImages(data.drugsWithImages)
       } else {
         console.error('Unexpected response format:', data);
         setDrugs([]);
@@ -137,8 +141,14 @@ function Drugs() {
               </TableRow>
             ))}
           </TableBody>
-        </Table>
 
+          <TableFooter>
+              <span className="text-gray-500 text-sm">Total drugs: {total}</span>
+              <span className="text-gray-500 text-sm ml-2">Drugs with images: {drugsWithImages}</span>
+              <span className="text-black text-sm font-bold ml-2">Half Goal: {drugsWithImages}</span>/{total / 2}
+          </TableFooter>
+        </Table>
+          
         <button 
           type="submit" 
           className={`w-full py-2 px-4 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none ${submitting || !allImagesSelected() ? 'opacity-50 cursor-not-allowed' : ''}`} 
