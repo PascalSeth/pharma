@@ -1,5 +1,10 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from "@supabase/supabase-js";
 
-// Create a single supabase client for interacting with your database
-export const supabase = createClient('https://ujochwqfrntumhlfifvd.supabase.co',
-  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqb2Nod3Fmcm50dW1obGZpZnZkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzU3OTAxMjQsImV4cCI6MjA1MTM2NjEyNH0.pYdJMzvb2YZpYiW-oU1Fj06aM95VVAm4NBrojdocCYo')
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!; // Secure, backend only
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: { persistSession: false }, // Prevent session storage
+});

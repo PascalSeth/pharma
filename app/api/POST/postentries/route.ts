@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import { supabase } from "@/lib/supabase";
+import { supabase, supabaseAdmin } from "@/lib/supabase";
 
 // Function to sanitize file names (remove special characters and replace spaces)
 function sanitizeFileName(name: string): string {
@@ -48,7 +48,7 @@ export async function PATCH(req: NextRequest) {
 await supabase.storage.from("images").remove([filePath]);
 
 // Upload new image
-const { data: imageData, error } = await supabase.storage
+const { data: imageData, error } = await supabaseAdmin.storage
   .from("images")
   .upload(filePath, renamedFile, {
     cacheControl: "2592000",
