@@ -73,27 +73,25 @@ function Drugs() {
     return drugs.every(drug => selectedImages[drug.id]);
   }
 
-  async function handleSubmit(event: React.FormEvent) {
+  async function handleSubmit(event: React.FormEvent) { 
     event.preventDefault();
     setSubmitting(true);
   
-    const formData = new FormData();
-  
-    // Append images and ids to the form data
-    drugs.forEach((drug) => {
-      if (selectedImages[drug.id]) {
-        formData.append('images[]', selectedImages[drug.id]!); // Treating as array
-        formData.append('ids[]', drug.id);
-      }
-    });
-  
     try {
-      const response = await fetch('/api/POST/postentries', {
-        method: 'POST',
+         const uploadPromises = Object.entries(selectedImages).map(async ([id, file]) => {
+      if (!file) return;
+
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("id", id);
+
+      return fetch(`/api/POST/postentries`, {
+        method: "PATCH",
         body: formData,
       });
-  
-      if (!response.ok) throw new Error('Failed to submit');
+    });
+
+    await Promise.all(uploadPromises);
   
       // Alternative: Refetch drugs instead of full reload
       await fetchDrugs();
@@ -106,6 +104,7 @@ function Drugs() {
       setSubmitting(false);
     }
   }
+
   
 
   if (loading) return <div className="text-center text-lg text-gray-500">Loading...</div>;
