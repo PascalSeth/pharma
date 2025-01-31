@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import { supabase, supabaseAdmin } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 // Function to sanitize file names (remove special characters and replace spaces)
 function sanitizeFileName(name: string): string {
@@ -10,11 +10,12 @@ function sanitizeFileName(name: string): string {
     .replace(/^-+|-+$/g, ""); // Trim leading and trailing dashes
 }
 
-export async function PATCH(req: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
+    // Extract form data
     const formData = await req.formData();
-    const file = formData.get("image") as File;
     const drugListId = formData.get("id") as string;
+    const file = formData.get("image") as File;
 
     if (!file || !drugListId) {
       return NextResponse.json({ error: "Invalid data" }, { status: 400 });
@@ -39,37 +40,29 @@ export async function PATCH(req: NextRequest) {
     // Define file path based on the letter folder
     const filePath = `drugLists/${folderLetter}/${sanitizedFileName}.${fileExt}`;
 
-    // Convert File to Blob and rename
-    const renamedFile = new File([await file.arrayBuffer()], `${sanitizedFileName}.${fileExt}`, {
-      type: file.type,
-    });
+    
+    // Upload new image to Supabase
+    const { data: imageData, error } = await supabase.storage
+      .from("images")
+      .upload(filePath, file, {
+        cacheControl: "2592000",
+        contentType: file.type,
+      });
 
-// Delete existing image before uploading a new one
-await supabase.storage.from("images").remove([filePath]);
+    if (error) {
+      console.error("Supabase upload error:", error.message); // Add detailed error logging here
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
-// Upload new image
-const { data: imageData, error } = await supabaseAdmin.storage
-  .from("images")
-  .upload(filePath, renamedFile, {
-    cacheControl: "2592000",
-    contentType: renamedFile.type,
-  });
-
-  if (error) {
-    console.error("Supabase upload error:", error.message); // Add detailed error logging here
-    throw new Error(error.message);
-  }
-  
-
-    // Update database with image path
+    // Update the drug list with the new image path
     const updatedDrugList = await prisma.drugList.update({
       where: { id: drugListId },
-      data: { imageUrl: imageData.path }, // Using imageData.path
+      data: { imageUrl: imageData.path },
     });
 
     return NextResponse.json({ success: true, updatedDrugList }, { status: 200 });
   } catch (error) {
-    console.error("Error handling PATCH request:", error);
+    console.error("Error handling POST request:", error);
     return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
   }
 }
