@@ -38,7 +38,7 @@ function Drugs() {
       if (!/^[A-Z]$/.test(letter)) {
         throw new Error('Invalid letter parameter');
       }
-      const response = await fetch(`/entries/GET?letter=${letter}`);
+      const response = await fetch(`/api/GET/getdrugslistsentry?letter=${letter}`);
       if (!response.ok) throw new Error('Failed to fetch drugs');
       const data = await response.json();
       
@@ -88,18 +88,12 @@ function Drugs() {
     });
   
     try {
-      const response = await fetch('/entries/POST/', {
+      const response = await fetch('/api/POST/postentries', {
         method: 'POST',
         body: formData,
       });
   
       if (!response.ok) throw new Error('Failed to submit');
-  
-      // Clear selected images
-      setSelectedImages({});
-  
-      // Reload the page (hard refresh)
-      window.location.reload();
   
       // Alternative: Refetch drugs instead of full reload
       await fetchDrugs();
