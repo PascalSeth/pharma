@@ -55,8 +55,11 @@ const { data: imageData, error } = await supabaseAdmin.storage
     contentType: renamedFile.type,
   });
 
-if (error) throw new Error(error.message);
-
+  if (error) {
+    console.error("Supabase upload error:", error.message); // Add detailed error logging here
+    throw new Error(error.message);
+  }
+  
 
     // Update database with image path
     const updatedDrugList = await prisma.drugList.update({
