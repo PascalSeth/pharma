@@ -86,7 +86,7 @@ function Drugs() {
       formData.append("id", id);
 
       return fetch(`/api/POST/postentries`, {
-        method: "PATCH",
+        method: "POST",
         body: formData,
       });
     });
