@@ -10,7 +10,7 @@ function sanitizeFileName(name: string): string {
     .replace(/^-+|-+$/g, ""); // Trim leading and trailing dashes
 }
 
-export async function POST(req: NextRequest, { params }: { params: { letter: string } }) {
+export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
     const images = formData.getAll("images[]") as File[];
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest, { params }: { params: { letter: str
 
       // Get letter from drug name or use URL param (if provided)
       const firstLetter = drug.name.charAt(0).toUpperCase();
-      const folderLetter = /^[A-Z]$/.test(firstLetter) ? firstLetter : params.letter?.toUpperCase() || "Unknown";
+      const folderLetter = /^[A-Z]$/.test(firstLetter) ? firstLetter : firstLetter?.toUpperCase() || "Unknown";
 
       // Define file path based on the letter folder
       const filePath = `drugLists/${folderLetter}/${sanitizedFileName}.${fileExt}`;
