@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const images = formData.getAll("images[]") as File[];
     const ids = formData.getAll("ids[]") as string[];
-    
+
     if (!images.length || images.length !== ids.length) {
       return NextResponse.json({ error: "Invalid data" }, { status: 400 });
     }
@@ -37,19 +37,22 @@ export async function POST(req: NextRequest) {
       // Sanitize name for filename
       const sanitizedFileName = sanitizeFileName(drug.name);
       const fileExt = file.name.split(".").pop();
-
-      // Get letter from drug name or use URL param (if provided)
       const firstLetter = drug.name.charAt(0).toUpperCase();
-      const folderLetter = /^[A-Z]$/.test(firstLetter) ? firstLetter : firstLetter?.toUpperCase() || "Unknown";
+      const folderLetter = /^[A-Z]$/.test(firstLetter) ? firstLetter : "Unknown";
 
       // Define file path based on the letter folder
       const filePath = `drugLists/${folderLetter}/${sanitizedFileName}.${fileExt}`;
 
+      // Convert File to Blob and rename
+      const renamedFile = new File([await file.arrayBuffer()], `${sanitizedFileName}.${fileExt}`, {
+        type: file.type,
+      });
+
       const { data: imageData, error } = await supabase.storage
         .from("images")
-        .upload(filePath, file, {
+        .upload(filePath, renamedFile, {
           cacheControl: "2592000",
-          contentType: file.type,
+          contentType: renamedFile.type,
           upsert: true,
         });
 
