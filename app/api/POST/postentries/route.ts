@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/db";
-import { supabase, supabaseAdmin } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 // Function to sanitize file names (remove special characters and replace spaces)
 function sanitizeFileName(name: string): string {
@@ -12,11 +12,12 @@ function sanitizeFileName(name: string): string {
 
 export async function POST(req: NextRequest) {
   try {
+    // Extract form data
     const formData = await req.formData();
     const drugListId = formData.get("id") as string;
-    const files = formData.getAll("image") as File[]; // Get multiple files
+    const file = formData.get("image") as File;
 
-    if (!files.length || !drugListId) {
+    if (!file || !drugListId) {
       return NextResponse.json({ error: "Invalid data" }, { status: 400 });
     }
 
@@ -30,48 +31,59 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Drug not found" }, { status: 404 });
     }
 
-    const uploadedImages = [];
-    const progress = []; // Track upload status
+    // Sanitize name for filename
+    const sanitizedFileName = sanitizeFileName(drug.name);
+    const fileExt = file.name.split(".").pop();
+    const firstLetter = drug.name.charAt(0).toUpperCase();
+    const folderLetter = /^[A-Z]$/.test(firstLetter) ? firstLetter : "Unknown";
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const sanitizedFileName = sanitizeFileName(drug.name);
-      const fileExt = file.name.split(".").pop();
-      const firstLetter = drug.name.charAt(0).toUpperCase();
-      const folderLetter = /^[A-Z]$/.test(firstLetter) ? firstLetter : "Unknown";
-      const filePath = `drugLists/${folderLetter}/${sanitizedFileName}-${i + 1}.${fileExt}`;
+    // Define file path
+    const filePath = `drugLists/${folderLetter}/${sanitizedFileName}.${fileExt}`;
 
-      // Upload new image to Supabase
-      const { data: imageData, error } = await supabaseAdmin.storage
-        .from("images")
-        .upload(filePath, file, {
-          cacheControl: "2592000",
-          contentType: file.type,
-          upsert: true, // Allow overwriting existing files
+    // Check if the file already exists
+    const { data: existingFile, error: checkError } = await supabase.storage
+      .from("images")
+      .list(`drugLists/${folderLetter}`, {
+        search: sanitizedFileName,
+      });
 
-        });
-
-      if (error) {
-        console.error(`Error uploading file ${i + 1}:`, error.message);
-        progress.push(`File ${i + 1}: Failed`);
-        continue; // Continue with the next file
-      }
-
-      uploadedImages.push(imageData.path);
-      progress.push(`File ${i + 1}: Sent`); // Track success
+    if (checkError) {
+      console.error("Supabase file check error:", checkError.message);
+      return NextResponse.json({ error: checkError.message }, { status: 500 });
     }
 
-    if (!uploadedImages.length) {
-      return NextResponse.json({ error: "No images uploaded successfully" }, { status: 500 });
+    if (existingFile?.length) {
+      // If file exists, update Prisma with existing path
+      const existingImagePath = existingFile[0].name; // Use the first matching file
+
+      const updatedDrugList = await prisma.drugList.update({
+        where: { id: drugListId },
+        data: { imageUrl: `drugLists/${folderLetter}/${existingImagePath}` },
+      });
+
+      return NextResponse.json({ success: true, updatedDrugList, message: "File already exists, path updated." }, { status: 200 });
     }
 
-    // Update the drug list with the last uploaded image path
+    // Upload new image to Supabase if it doesn't exist
+    const { data: imageData, error } = await supabase.storage
+      .from("images")
+      .upload(filePath, file, {
+        cacheControl: "2592000",
+        contentType: file.type,
+      });
+
+    if (error) {
+      console.error("Supabase upload error:", error.message);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    // Update Prisma with the new file path
     const updatedDrugList = await prisma.drugList.update({
       where: { id: drugListId },
-      data: { imageUrl: uploadedImages[uploadedImages.length - 1] }, // Store only the last uploaded image
+      data: { imageUrl: imageData.path },
     });
 
-    return NextResponse.json({ success: true, updatedDrugList, uploadedImages, progress }, { status: 200 });
+    return NextResponse.json({ success: true, updatedDrugList, message: "New file uploaded and path updated." }, { status: 200 });
   } catch (error) {
     console.error("Error handling POST request:", error);
     return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
