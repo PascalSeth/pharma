@@ -26,7 +26,6 @@ export async function GET(request: Request) {
         },
         OR: [{ imageUrl: null }, { imageUrl: "" }, ],
       },
-      take:3,
       select: {
         id: true,
         name: true,
