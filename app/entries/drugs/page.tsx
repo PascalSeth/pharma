@@ -78,24 +78,26 @@ function Drugs() {
     setSubmitting(true);
   
     try {
-         const uploadPromises = Object.entries(selectedImages).map(async ([id, file]) => {
-      if (!file) return;
-
-      const formData = new FormData();
-      formData.append("image", file);
-      formData.append("id", id);
-
-      return fetch(`/api/POST/postentries`, {
-        method: "POST",
-        body: formData,
-      });
-    });
-
-    await Promise.all(uploadPromises);
+      for (const [id, file] of Object.entries(selectedImages)) {
+        if (!file) continue; // Skip if no file is selected
+  
+        const formData = new FormData();
+        formData.append("image", file);
+        formData.append("id", id);
+  
+        const response = await fetch(`/api/POST/postentries`, {
+          method: "POST",
+          body: formData,
+        });
+  
+        if (!response.ok) {
+          console.error(`Error uploading image for drug ID: ${id}`);
+          alert(`Failed to upload image for drug ID: ${id}`);
+        }
+      }
   
       // Alternative: Refetch drugs instead of full reload
       await fetchDrugs();
-  
       alert('Images uploaded and drugs list refreshed successfully');
     } catch (error) {
       console.error(error);
@@ -104,7 +106,7 @@ function Drugs() {
       setSubmitting(false);
     }
   }
-
+  
   
 
   if (loading) return <div className="text-center text-lg text-gray-500">Loading...</div>;

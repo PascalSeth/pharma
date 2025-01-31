@@ -12,12 +12,11 @@ function sanitizeFileName(name: string): string {
 
 export async function POST(req: NextRequest) {
   try {
-    // Extract form data
     const formData = await req.formData();
     const drugListId = formData.get("id") as string;
-    const file = formData.get("image") as File;
+    const files = formData.getAll("image") as File[]; // Get multiple files
 
-    if (!file || !drugListId) {
+    if (!files.length || !drugListId) {
       return NextResponse.json({ error: "Invalid data" }, { status: 400 });
     }
 
@@ -31,36 +30,42 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Drug not found" }, { status: 404 });
     }
 
-    // Sanitize name for filename
-    const sanitizedFileName = sanitizeFileName(drug.name);
-    const fileExt = file.name.split(".").pop();
-    const firstLetter = drug.name.charAt(0).toUpperCase();
-    const folderLetter = /^[A-Z]$/.test(firstLetter) ? firstLetter : "Unknown";
+    const uploadedImages = [];
 
-    // Define file path based on the letter folder
-    const filePath = `drugLists/${folderLetter}/${sanitizedFileName}.${fileExt}`;
+    for (const file of files) {
+      const sanitizedFileName = sanitizeFileName(drug.name);
+      const fileExt = file.name.split(".").pop();
+      const firstLetter = drug.name.charAt(0).toUpperCase();
+      const folderLetter = /^[A-Z]$/.test(firstLetter) ? firstLetter : "Unknown";
+      const filePath = `drugLists/${folderLetter}/${sanitizedFileName}.${fileExt}`;
 
-    
-    // Upload new image to Supabase
-    const { data: imageData, error } = await supabase.storage
-      .from("images")
-      .upload(filePath, file, {
-        cacheControl: "2592000",
-        contentType: file.type,
-      });
+      // Upload new image to Supabase
+      const { data: imageData, error } = await supabase.storage
+        .from("images")
+        .upload(filePath, file, {
+          cacheControl: "2592000",
+          contentType: file.type,
+        });
 
-    if (error) {
-      console.error("Supabase upload error:", error.message); // Add detailed error logging here
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      if (error) {
+        console.error("Supabase upload error:", error.message);
+        continue; // Continue with the next file instead of failing all
+      }
+
+      uploadedImages.push(imageData.path);
     }
 
-    // Update the drug list with the new image path
+    if (!uploadedImages.length) {
+      return NextResponse.json({ error: "No images uploaded successfully" }, { status: 500 });
+    }
+
+    // Update the drug list with the last uploaded image path
     const updatedDrugList = await prisma.drugList.update({
       where: { id: drugListId },
-      data: { imageUrl: imageData.path },
+      data: { imageUrl: uploadedImages[uploadedImages.length - 1] }, // Store only the last uploaded image
     });
 
-    return NextResponse.json({ success: true, updatedDrugList }, { status: 200 });
+    return NextResponse.json({ success: true, updatedDrugList, uploadedImages }, { status: 200 });
   } catch (error) {
     console.error("Error handling POST request:", error);
     return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
