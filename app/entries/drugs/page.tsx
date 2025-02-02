@@ -32,8 +32,8 @@ const { toast } = useToast();
   const letter = searchParams.get('letter')?.charAt(0).toUpperCase() || 'A'; // Default letter if not provided
   const [drugs, setDrugs] = useState<Drug[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false); // Renamed from "submitting"
   const [selectedImages, setSelectedImages] = useState<ImageState>({});
-  const [submitting, setSubmitting] = useState(false);
   const [total, setTotal] = useState(0);
   const [drugsWithImages, setDrugsWithImages] = useState(0);
    const [uploadingId, setUploadingId] = useState<string | null>(null); // Track which drug is uploading
@@ -69,7 +69,8 @@ const { toast } = useToast();
   async function handleImageChange(event: React.ChangeEvent<HTMLInputElement>, drugId: string) {
     const file = event.target.files?.[0] || null;
     if (!file) return;
-  
+    setSelectedImages((prev) => ({ ...prev, [drugId]: file })); // Store selected image
+
     setUploadingId(drugId); // Disable other inputs during upload
   
     // Show "Uploading..." toast
@@ -118,13 +119,11 @@ const { toast } = useToast();
   function allImagesSelected(): boolean {
     return drugs.every(drug => selectedImages[drug.id]);
   }
-
   async function handleRefresh() {
-    setLoading(true);
+    setRefreshing(true); // Start refreshing state
     await fetchDrugs();
-    setLoading(false);
+    setRefreshing(false); // Stop refreshing state
   }
-  
   
   
 
@@ -173,12 +172,13 @@ const { toast } = useToast();
         </Table>
           
         <button 
-          type="submit" 
-          className={`w-full py-2 px-4 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none ${submitting || !allImagesSelected() ? 'opacity-50 cursor-not-allowed' : ''}`} 
-          disabled={submitting || !allImagesSelected()}
-        >
-          {submitting ? 'Refrehing...' : 'Refresh'}
-        </button>
+    type="button" 
+    className={`w-full py-2 px-4 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none ${refreshing || !allImagesSelected() ? 'opacity-50 cursor-not-allowed' : ''}`} 
+    onClick={handleRefresh} 
+    disabled={refreshing || !allImagesSelected()}
+  >
+    {refreshing ? 'Refreshing...' : 'Refresh'}
+  </button>
       </form>
     </div>
   );
