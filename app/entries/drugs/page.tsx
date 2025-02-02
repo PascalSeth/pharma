@@ -12,6 +12,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { ToastAction } from "@/components/ui/toast";
+import { useToast } from '@/hooks/use-toast';
 
 type Drug = {
   id: string;
@@ -24,6 +26,8 @@ type ImageState = {
 };
 
 function Drugs() {
+
+const { toast } = useToast();
   const searchParams = useSearchParams();
   const letter = searchParams.get('letter')?.charAt(0).toUpperCase() || 'A'; // Default letter if not provided
   const [drugs, setDrugs] = useState<Drug[]>([]);
@@ -32,7 +36,8 @@ function Drugs() {
   const [submitting, setSubmitting] = useState(false);
   const [total, setTotal] = useState(0);
   const [drugsWithImages, setDrugsWithImages] = useState(0);
-  // Function to fetch drugs
+   const [uploadingId, setUploadingId] = useState<string | null>(null); // Track which drug is uploading
+ // Function to fetch drugs
   async function fetchDrugs() {
     try {
       if (!/^[A-Z]$/.test(letter)) {
@@ -61,51 +66,65 @@ function Drugs() {
     fetchDrugs();
   }, [letter]);
 
-  function handleImageChange(event: React.ChangeEvent<HTMLInputElement>, drugId: string) {
+  async function handleImageChange(event: React.ChangeEvent<HTMLInputElement>, drugId: string) {
     const file = event.target.files?.[0] || null;
-    setSelectedImages(prevState => ({
-      ...prevState,
-      [drugId]: file,
-    }));
+    if (!file) return;
+  
+    setUploadingId(drugId); // Disable other inputs during upload
+  
+    // Show "Uploading..." toast
+    toast({
+      title: "Uploading...",
+      description: `Uploading image for ${drugId}. Please wait...`,
+    });
+  
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("id", drugId);
+  
+    try {
+      const response = await fetch(`/api/POST/postentries`, {
+        method: "POST",
+        body: formData,
+      });
+  
+      if (!response.ok) {
+        console.error(`Error uploading image for drug ID: ${drugId}`);
+        toast({
+          title: "Upload Failed",
+          description: `Could not upload image for ${drugId}. Try again.`,
+          action: <ToastAction altText="Retry">Retry</ToastAction>,
+        });
+      } else {
+        await fetchDrugs(); // Refresh the drugs list after a successful upload
+        toast({
+          title: "Upload Successful",
+          description: "The image has been uploaded successfully.",
+        });
+      }
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Error",
+        description: "An error occurred while uploading. Please try again.",
+      });
+    } finally {
+      setUploadingId(null); // Re-enable inputs after upload
+    }
   }
+
+  
 
   function allImagesSelected(): boolean {
     return drugs.every(drug => selectedImages[drug.id]);
   }
 
-  async function handleSubmit(event: React.FormEvent) { 
-    event.preventDefault();
-    setSubmitting(true);
-  
-    try {
-      for (const [id, file] of Object.entries(selectedImages)) {
-        if (!file) continue; // Skip if no file is selected
-  
-        const formData = new FormData();
-        formData.append("image", file);
-        formData.append("id", id);
-  
-        const response = await fetch(`/api/POST/postentries`, {
-          method: "POST",
-          body: formData,
-        });
-  
-        if (!response.ok) {
-          console.error(`Error uploading image for drug ID: ${id}`);
-          alert(`Failed to upload image for drug ID: ${id}`);
-        }
-      }
-  
-      // Alternative: Refetch drugs instead of full reload
-      await fetchDrugs();
-      alert('Images uploaded and drugs list refreshed successfully');
-    } catch (error) {
-      console.error(error);
-      alert('Error while submitting');
-    } finally {
-      setSubmitting(false);
-    }
+  async function handleRefresh() {
+    setLoading(true);
+    await fetchDrugs();
+    setLoading(false);
   }
+  
   
   
 
@@ -114,7 +133,7 @@ function Drugs() {
   return (
     <div className="p-6 max-w-screen-xl mx-auto">
       <h1 className="text-2xl font-semibold mb-6 text-center">{letter} Drugs List</h1>
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleRefresh} className="space-y-6">
         <Table className="min-w-full bg-white shadow-lg rounded-lg">
           <TableCaption>List of drugs starting with {letter}</TableCaption>
           <TableHeader>
@@ -133,8 +152,9 @@ function Drugs() {
                       accept="image/*" 
                       name="image" 
                       className="text-sm text-gray-500 border border-gray-300 rounded-lg py-1 px-2 focus:outline-none" 
-                      onChange={(e) => handleImageChange(e, drug.id)} 
-                    />
+                      onChange={(e) => handleImageChange(e, drug.id)}
+                disabled={uploadingId !== null && uploadingId !== drug.id} // Disable other inputs when uploading
+              />
                     {selectedImages[drug.id] && (
                       <img src={URL.createObjectURL(selectedImages[drug.id]!)} alt="Selected" width={100} className="rounded-md" />
                     )}  
@@ -157,7 +177,7 @@ function Drugs() {
           className={`w-full py-2 px-4 rounded-md bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 focus:outline-none ${submitting || !allImagesSelected() ? 'opacity-50 cursor-not-allowed' : ''}`} 
           disabled={submitting || !allImagesSelected()}
         >
-          {submitting ? 'Submitting...' : 'Submit All'}
+          {submitting ? 'Refrehing...' : 'Refresh'}
         </button>
       </form>
     </div>

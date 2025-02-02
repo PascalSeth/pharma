@@ -95,7 +95,7 @@ export default function DrugInventoryPage() {
       <h1 className="text-2xl font-bold mb-4">Add Drug Inventory</h1>
       <p className="text-lg mb-8">Enter the details of the drug inventory below.</p>
 
-      <div className="grid grid-cols-2 gap-6">
+      <div className="grid max-lg:grid-cols-1 grid-cols-2 gap-6">
         {/* General Information Section */}
         <div className="p-6 border rounded-md shadow">
           <h2 className="text-lg font-semibold mb-4">General Information</h2>
@@ -158,9 +158,9 @@ export default function DrugInventoryPage() {
           {selectedDrugImage && (
             <div className="mt-4">
               <img
-                src={selectedDrugImage}
+                src={`https://ujochwqfrntumhlfifvd.supabase.co/storage/v1/object/public/images/${selectedDrugImage}`}
                 alt="Selected Drug"
-                className="max-w-full h-auto rounded-md shadow"
+                className="max-w-full h-52 max-lg:h-36 rounded-md shadow"
               />
             </div>
           )}

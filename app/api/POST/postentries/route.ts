@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server"; 
 import prisma from "@/lib/db";
 import { supabase } from "@/lib/supabase";
 
-// Function to sanitize file names (remove special characters and replace spaces)
+// Function to sanitize and make filename unique
 function sanitizeFileName(name: string): string {
   return name
     .toLowerCase()
@@ -21,69 +21,68 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid data" }, { status: 400 });
     }
 
-    // Fetch drug name from database
+    // Fetch drug info
     const drug = await prisma.drugList.findUnique({
       where: { id: drugListId },
-      select: { name: true },
+      select: { name: true, imageUrl: true }, // Fetch existing image
     });
 
     if (!drug) {
       return NextResponse.json({ error: "Drug not found" }, { status: 404 });
     }
 
-    // Sanitize name for filename
+    // Sanitize name and create unique filename
     const sanitizedFileName = sanitizeFileName(drug.name);
     const fileExt = file.name.split(".").pop();
     const firstLetter = drug.name.charAt(0).toUpperCase();
     const folderLetter = /^[A-Z]$/.test(firstLetter) ? firstLetter : "Unknown";
 
-    // Define file path
-    const filePath = `drugLists/${folderLetter}/${sanitizedFileName}.${fileExt}`;
+    // **Append timestamp to ensure uniqueness**
+    const timestamp = Date.now();
+    const newFilePath = `drugLists/${folderLetter}/${sanitizedFileName}-${timestamp}.${fileExt}`;
 
-    // Check if the file already exists
-    const { data: existingFile, error: checkError } = await supabase.storage
-      .from("images")
-      .list(`drugLists/${folderLetter}`, {
-        search: sanitizedFileName,
-      });
+    // **Step 1: Ensure Old File is Deleted Before Uploading**
+    if (drug.imageUrl) {
+      console.log(`Deleting old file: ${drug.imageUrl}`);
+      const { error: deleteError } = await supabase.storage
+        .from("images")
+        .remove([drug.imageUrl]); 
 
-    if (checkError) {
-      console.error("Supabase file check error:", checkError.message);
-      return NextResponse.json({ error: checkError.message }, { status: 500 });
+      if (deleteError) {
+        console.error("Supabase delete error:", deleteError.message);
+        return NextResponse.json({ error: "Failed to delete existing file" }, { status: 500 });
+      }
+      console.log("Old file deleted successfully.");
     }
 
-    if (existingFile?.length) {
-      // If file exists, update Prisma with existing path
-      const existingImagePath = existingFile[0].name; // Use the first matching file
-
-      const updatedDrugList = await prisma.drugList.update({
-        where: { id: drugListId },
-        data: { imageUrl: `drugLists/${folderLetter}/${existingImagePath}` },
-      });
-
-      return NextResponse.json({ success: true, updatedDrugList, message: "File already exists, path updated." }, { status: 200 });
-    }
-
-    // Upload new image to Supabase if it doesn't exist
-    const { data: imageData, error } = await supabase.storage
+    // **Step 2: Upload New Image**
+    console.log(`Uploading new file: ${newFilePath}`);
+    const { data: imageData, error: uploadError } = await supabase.storage
       .from("images")
-      .upload(filePath, file, {
+      .upload(newFilePath, file, {
         cacheControl: "2592000",
         contentType: file.type,
       });
 
-    if (error) {
-      console.error("Supabase upload error:", error.message);
-      return NextResponse.json({ error: error.message }, { status: 500 });
+    if (uploadError) {
+      console.error("Supabase upload error:", uploadError.message);
+      return NextResponse.json({ error: uploadError.message }, { status: 500 });
     }
 
-    // Update Prisma with the new file path
+    console.log("New file uploaded successfully.");
+
+    // **Step 3: Update Database with New Image Path**
     const updatedDrugList = await prisma.drugList.update({
       where: { id: drugListId },
       data: { imageUrl: imageData.path },
     });
 
-    return NextResponse.json({ success: true, updatedDrugList, message: "New file uploaded and path updated." }, { status: 200 });
+    return NextResponse.json({
+      success: true,
+      updatedDrugList,
+      message: "New file uploaded and path updated.",
+    }, { status: 200 });
+    
   } catch (error) {
     console.error("Error handling POST request:", error);
     return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
