@@ -1,15 +1,18 @@
-'use client'
+'use client';
+import Link from 'next/link';
 import React, { useEffect, useState } from 'react';
 
 type InventoryItem = {
-  image: string;
-  drugList: {
-    name: string;
-  };
+  id: string;
+  name: string;
   quantity: number;
-  expirationDate: string;
+  status: string;
+  drugList: {
+    id: string;
+    name: string;
+    imageUrl: string | null
+  }
 };
-
 
 function Outofstock() {
   const [outOfStockItems, setOutOfStockItems] = useState<InventoryItem[]>([]);
@@ -35,10 +38,14 @@ function Outofstock() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-3 gap-4">
-        {Array(3).fill(0).map((_, index) => (
-          <div key={index} className="bg-gray-200 rounded-lg shadow p-4 animate-pulse h-20"></div>
-        ))}
+      <div className="overflow-x-auto w-full">
+        <div className="flex space-x-4 w-max">
+          {Array(6)
+            .fill(0)
+            .map((_, index) => (
+              <div key={index} className="bg-gray-200 rounded-lg shadow p-4 w-52 h-24 animate-pulse"></div>
+            ))}
+        </div>
       </div>
     );
   }
@@ -52,21 +59,44 @@ function Outofstock() {
   }
 
   return (
-    <div className="grid grid-cols-3 gap-4">
-      {outOfStockItems.map((item) => {
-        const isExpired = new Date(item.expirationDate) < new Date();
-        const status = isExpired ? 'Expired' : 'Out of Stock';
+    <div className=" w-full">
+             <div className="flex  justify-between w-full items-center px-4">
+<div>
+<h2 className="text-lg font-semibold">Out of Stock Items</h2>
 
-        return (
-          <div key={item.image} className="bg-white rounded-lg shadow p-4 flex flex-col items-center">
-            <img src={item.image} alt={item.drugList.name} className="w-16 h-16 rounded-full mb-2" />
-            <span className="bg-gray-200 text-xs font-semibold px-2 py-1 rounded-md">{status}</span>
-            <div className="text-gray-700 mt-2 text-sm font-medium text-center">{item.drugList.name}</div>
-            <div className="text-gray-500 text-xs">{item.quantity} items</div>
-          </div>
-        );
-      })}
+</div>
+          <Link href="/outofstock" className="text-blue-600 hover:underline">
+            See All
+          </Link>
+        </div>
+      <div className="grid grid-flow-col auto-cols-[minmax(200px,1fr)] gap-4 p-4 w-max">
+        {outOfStockItems.map((item) => (
+      <div key={item.id} className="bg-white w-full rounded-lg shadow-md p-3 flex items-center gap-4">
+      {/* Drug Image */}
+      <img
+        src={item.drugList.imageUrl ?? 'https://i.pinimg.com/736x/ca/df/aa/cadfaac7ed2abf8052db94d540808e60.jpg'}
+        alt={item.drugList.name}
+        className="w-20 h-20 object-cover rounded-md"
+      />
+      
+      {/* Drug Details */}
+      <div className="flex flex-col flex-1">
+        <div className="flex justify-between items-center">
+          <span className="text-green-600 font-bold">{item.drugList.name}</span>
+   
+        </div>
+        <div className="text-gray-700 text-sm font-medium">{item.name}</div>
+        <div className="text-gray-500 text-xs">{item.quantity} items</div>
+        <div>
+        <span className="bg-black text-white text-xs font-semibold px-2 py-1 rounded-md">
+            {item.status}
+          </span>
+        </div>
+      </div>
     </div>
+  ))}
+</div>
+</div>
   );
 }
 

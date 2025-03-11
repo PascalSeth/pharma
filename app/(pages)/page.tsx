@@ -173,8 +173,10 @@ function Home() {
               Upgrade Plan
             </button>
           </div>
+          <div className="col-span-1 lg:col-span-3">
+          <Outofstock/>   
+</div>
 
-    <Outofstock/>   
                   <div className="col-span-1 lg:col-span-3">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Medicines</h1>
