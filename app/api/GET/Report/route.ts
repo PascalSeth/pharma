@@ -6,7 +6,7 @@ const letterGroups = [
   { group: 'A', person: 'Tap In', letters: ['A'] },
   { group: 'C', person: 'Pascal', letters: ['C'] },
   { group: 'M V', person: 'Sita', letters: ['M', 'V'] },
-  { group: 'D P', person: 'Winnerman', letters: ['D', 'P'] },
+  { group: 'D P', person: 'Clifford', letters: ['D', 'P'] },
   { group: 'L S Z', person: 'Knightmare', letters: ['L', 'S', 'Z'] },
   { group: 'O G B', person: 'Cyran', letters: ['O', 'G', 'B'] },
   { group: 'N E', person: 'Dedon', letters: ['N', 'E'] }
